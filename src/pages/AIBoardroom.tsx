@@ -2,14 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, Users, Bot, User, Sparkles, Play, Square, Plus, Settings2, Search, X, CheckCircle2, AlertCircle, Zap } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-interface Agent {
-  id: string;
-  name: string;
-  role: string;
-  avatar: string;
-  useSearch: boolean;
-}
+import { Agent, AGENT_CATALOG, DEFAULT_AGENTS } from '../data/agents';
+import AgentLibrary from './AgentLibrary';
 
 interface Message {
   id: string;
@@ -22,47 +16,19 @@ interface Message {
 
 interface AIBoardroomProps {
   isReady: boolean;
+  agents: Agent[];
+  setAgents: React.Dispatch<React.SetStateAction<Agent[]>>;
 }
 
-const DEFAULT_AGENTS: Agent[] = [
-  {
-    id: '1',
-    name: 'Chuyên gia Dữ liệu',
-    role: 'Bạn là một chuyên gia dữ liệu thực tế và khách quan. Nhiệm vụ của bạn là cung cấp số liệu, xu hướng thị trường và fact-check các ý tưởng. Luôn dựa vào dữ liệu thực tế.',
-    avatar: '📊',
-    useSearch: true,
-  },
-  {
-    id: '2',
-    name: 'Giám đốc Sáng tạo',
-    role: 'Bạn là một giám đốc sáng tạo bay bổng, luôn đưa ra các ý tưởng đột phá, điên rồ và khác biệt. Nhiệm vụ của bạn là nghĩ ra những giải pháp không ai ngờ tới. Không cần quan tâm đến rủi ro.',
-    avatar: '💡',
-    useSearch: false,
-  },
-  {
-    id: '3',
-    name: 'Kẻ Phản biện',
-    role: 'Bạn là một chuyên gia quản trị rủi ro cực kỳ khó tính. Nhiệm vụ của bạn là TÌM RA LỖ HỔNG trong ý tưởng của người trước. Tuyệt đối không được dễ dàng đồng tình. Hãy chỉ trích một cách logic và sắc bén.',
-    avatar: '⚖️',
-    useSearch: false,
-  },
-  {
-    id: '4',
-    name: 'Chuyên gia Thông tin',
-    role: 'Bạn là một chuyên gia tìm kiếm thông tin. Nhiệm vụ của bạn là sử dụng công cụ Google Search để tìm kiếm thông tin mới nhất và chính xác nhất theo yêu cầu của chủ tọa. Luôn cung cấp đường dẫn nguồn tham khảo.',
-    avatar: '🔎',
-    useSearch: true,
-  }
-];
-
-export default function AIBoardroom({ isReady }: AIBoardroomProps) {
-  const [agents, setAgents] = useState<Agent[]>(DEFAULT_AGENTS);
+export default function AIBoardroom({ isReady, agents, setAgents }: AIBoardroomProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [meetingGoal, setMeetingGoal] = useState('');
   const [input, setInput] = useState('');
   const [isAutoDebating, setIsAutoDebating] = useState(false);
   const [typingAgent, setTypingAgent] = useState<string | null>(null);
   const [showAddAgent, setShowAddAgent] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [addAgentTab, setAddAgentTab] = useState<'catalog' | 'custom'>('catalog');
   
   // New Agent Form
   const [newAgentName, setNewAgentName] = useState('');
@@ -277,9 +243,35 @@ export default function AIBoardroom({ isReady }: AIBoardroomProps) {
     setShowAddAgent(false);
   };
 
+  const handleAddFromCatalog = (catalogAgent: Agent) => {
+    if (agents.some(a => a.name === catalogAgent.name)) {
+      alert(`${catalogAgent.name} đã có trong Phòng Họp AI!`);
+      return;
+    }
+    const newAgent: Agent = {
+      ...catalogAgent,
+      id: crypto.randomUUID()
+    };
+    setAgents(prev => [...prev, newAgent]);
+    setShowAddAgent(false);
+  };
+
   const removeAgent = (id: string) => {
     setAgents(prev => prev.filter(a => a.id !== id));
   };
+
+  if (showLibrary) {
+    return (
+      <div className="absolute inset-0 z-50 bg-white">
+        <AgentLibrary 
+          isReady={isReady} 
+          agents={agents} 
+          setAgents={setAgents} 
+          onClose={() => setShowLibrary(false)} 
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full bg-gray-50 overflow-hidden">
@@ -290,13 +282,22 @@ export default function AIBoardroom({ isReady }: AIBoardroomProps) {
             <Users size={20} />
             <span>Hội đồng AI ({agents.length})</span>
           </div>
-          <button 
-            onClick={() => setShowAddAgent(true)}
-            className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors"
-            title="Thêm Agent"
-          >
-            <Plus size={18} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={() => setShowLibrary(true)}
+              className="p-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors flex items-center gap-1 text-sm font-medium"
+              title="Mở Kho Agent"
+            >
+              <Sparkles size={16} /> Kho
+            </button>
+            <button 
+              onClick={() => setShowAddAgent(true)}
+              className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-md transition-colors"
+              title="Thêm Agent Tùy chỉnh"
+            >
+              <Plus size={18} />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -346,14 +347,26 @@ export default function AIBoardroom({ isReady }: AIBoardroomProps) {
       <div className="flex-1 flex flex-col min-w-0 relative">
         {/* Header */}
         <header className="bg-white border-b border-gray-200 px-6 py-4 flex flex-col gap-3 shrink-0 z-10 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
-              <Sparkles size={24} />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
+                <Sparkles size={24} />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">Phòng Họp Ảo AI</h1>
+                <p className="text-xs text-gray-500">Nơi các chuyên gia AI thảo luận và giải quyết vấn đề</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-800">Phòng Họp Ảo AI</h1>
-              <p className="text-xs text-gray-500">Nơi các chuyên gia AI thảo luận và giải quyết vấn đề</p>
-            </div>
+            
+            {/* Mobile/Tablet Agent Library Button */}
+            <button 
+              onClick={() => setShowLibrary(true)}
+              className="lg:hidden p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+              title="Mở Kho Agent"
+            >
+              <Sparkles size={18} />
+              <span className="hidden sm:inline">Kho Agent</span>
+            </button>
           </div>
           
           <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
@@ -518,77 +531,131 @@ export default function AIBoardroom({ isReady }: AIBoardroomProps) {
         {/* Add Agent Modal */}
         {showAddAgent && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-gray-800">Thêm Chuyên gia mới</h3>
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+                <h3 className="text-lg font-bold text-gray-800">Thư viện Chuyên gia</h3>
                 <button onClick={() => setShowAddAgent(false)} className="text-gray-400 hover:text-gray-600">
                   <X size={20} />
                 </button>
               </div>
-              <form onSubmit={handleAddAgent} className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên Chuyên gia</label>
-                  <input 
-                    type="text" 
-                    required
-                    value={newAgentName}
-                    onChange={e => setNewAgentName(e.target.value)}
-                    placeholder="VD: Chuyên gia Tâm lý học"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Avatar (Emoji)</label>
-                  <input 
-                    type="text" 
-                    required
-                    maxLength={2}
-                    value={newAgentAvatar}
-                    onChange={e => setNewAgentAvatar(e.target.value)}
-                    className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-center text-xl"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò & Tính cách (System Prompt)</label>
-                  <textarea 
-                    required
-                    value={newAgentRole}
-                    onChange={e => setNewAgentRole(e.target.value)}
-                    placeholder="VD: Bạn là một chuyên gia tâm lý học hành vi. Hãy phân tích vấn đề dưới góc độ cảm xúc của khách hàng..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none h-24 text-sm"
-                  />
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <div className="flex-1">
-                    <h4 className="text-sm font-medium text-gray-800">Quyền truy cập Internet</h4>
-                    <p className="text-xs text-gray-500">Cho phép Agent tìm kiếm Google Live để lấy dữ liệu thực tế.</p>
+              
+              {/* Tabs */}
+              <div className="flex border-b border-gray-200 px-6 shrink-0">
+                <button 
+                  className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${addAgentTab === 'catalog' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setAddAgentTab('catalog')}
+                >
+                  Danh sách có sẵn
+                </button>
+                <button 
+                  className={`py-3 px-4 font-medium text-sm border-b-2 transition-colors ${addAgentTab === 'custom' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setAddAgentTab('custom')}
+                >
+                  Tạo mới tùy chỉnh
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+                {addAgentTab === 'catalog' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {AGENT_CATALOG.map((agent, idx) => (
+                      <div key={idx} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-2xl shrink-0">
+                            {agent.avatar}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-gray-800 text-sm">{agent.name}</h4>
+                            {agent.useSearch ? (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100 mt-1">
+                                <Search size={10} /> Có Search
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full border border-gray-200 mt-1">
+                                <Zap size={10} /> Tốc độ cao
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-xs text-gray-500 line-clamp-4 leading-relaxed flex-1 mb-4">
+                          {agent.role}
+                        </p>
+                        <button
+                          onClick={() => handleAddFromCatalog(agent)}
+                          className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                        >
+                          <Plus size={16} /> Chọn Agent này
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer"
-                      checked={newAgentSearch}
-                      onChange={e => setNewAgentSearch(e.target.checked)}
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                  </label>
-                </div>
-                <div className="pt-4 flex gap-3">
-                  <button 
-                    type="button"
-                    onClick={() => setShowAddAgent(false)}
-                    className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-                  >
-                    Hủy
-                  </button>
-                  <button 
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
-                  >
-                    Thêm vào Hội đồng
-                  </button>
-                </div>
-              </form>
+                ) : (
+                  <form onSubmit={handleAddAgent} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm max-w-2xl mx-auto space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tên Chuyên gia</label>
+                      <input 
+                        type="text" 
+                        required
+                        value={newAgentName}
+                        onChange={e => setNewAgentName(e.target.value)}
+                        placeholder="VD: Chuyên gia Tâm lý học"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Avatar (Emoji)</label>
+                      <input 
+                        type="text" 
+                        required
+                        maxLength={2}
+                        value={newAgentAvatar}
+                        onChange={e => setNewAgentAvatar(e.target.value)}
+                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-center text-xl"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò & Tính cách (System Prompt)</label>
+                      <textarea 
+                        required
+                        value={newAgentRole}
+                        onChange={e => setNewAgentRole(e.target.value)}
+                        placeholder="VD: Bạn là một chuyên gia tâm lý học hành vi. Hãy phân tích vấn đề dưới góc độ cảm xúc của khách hàng..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none h-24 text-sm"
+                      />
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex-1">
+                        <h4 className="text-sm font-medium text-gray-800">Quyền truy cập Internet</h4>
+                        <p className="text-xs text-gray-500">Cho phép Agent tìm kiếm Google Live để lấy dữ liệu thực tế.</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          className="sr-only peer"
+                          checked={newAgentSearch}
+                          onChange={e => setNewAgentSearch(e.target.checked)}
+                        />
+                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                      </label>
+                    </div>
+                    <div className="pt-4 flex gap-3">
+                      <button 
+                        type="button"
+                        onClick={() => setShowAddAgent(false)}
+                        className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                      >
+                        Hủy
+                      </button>
+                      <button 
+                        type="submit"
+                        className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+                      >
+                        Thêm vào Hội đồng
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
             </div>
           </div>
         )}

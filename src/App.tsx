@@ -6,12 +6,14 @@ import ImageAnalyzer from './pages/ImageAnalyzer';
 import ImageDescriber from './pages/ImageDescriber';
 import VideoAnalyzer from './pages/VideoAnalyzer';
 import AIBoardroom from './pages/AIBoardroom';
+import { Agent, DEFAULT_AGENTS } from './data/agents';
 
 export default function App() {
   const [currentApp, setCurrentApp] = useState('translator');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [agents, setAgents] = useState<Agent[]>(DEFAULT_AGENTS);
 
   useEffect(() => {
     // Check if already initialized in window (from index.html script)
@@ -96,7 +98,7 @@ export default function App() {
           {currentApp === 'analyzer' && <ImageAnalyzer isReady={isReady} />}
           {currentApp === 'describer' && <ImageDescriber isReady={isReady} />}
           {currentApp === 'video' && <VideoAnalyzer isReady={isReady} />}
-          {currentApp === 'boardroom' && <AIBoardroom isReady={isReady} />}
+          {currentApp === 'boardroom' && <AIBoardroom isReady={isReady} agents={agents} setAgents={setAgents} />}
         </main>
       </div>
     </div>
