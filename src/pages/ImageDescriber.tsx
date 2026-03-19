@@ -1,5 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, MessageSquareText, Loader2, Image as ImageIcon, X, Sparkles } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ImageDescriberProps {
   isReady: boolean;
@@ -173,8 +175,10 @@ Miêu tả cả màu sắc, trạng thái, và hành động (nếu có) của c
               <Sparkles className="text-purple-500" size={20} />
               Chi tiết bức ảnh
             </h3>
-            <div className="prose prose-purple max-w-none text-gray-700 leading-relaxed whitespace-pre-wrap">
-              {result}
+            <div className="markdown-body">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {result}
+              </ReactMarkdown>
             </div>
           </div>
         )}

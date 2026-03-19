@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import Translator from './pages/Translator';
 import ImageAnalyzer from './pages/ImageAnalyzer';
 import ImageDescriber from './pages/ImageDescriber';
+import VideoAnalyzer from './pages/VideoAnalyzer';
 
 export default function App() {
   const [currentApp, setCurrentApp] = useState('translator');
@@ -93,6 +94,7 @@ export default function App() {
           {currentApp === 'translator' && <Translator isReady={isReady} />}
           {currentApp === 'analyzer' && <ImageAnalyzer isReady={isReady} />}
           {currentApp === 'describer' && <ImageDescriber isReady={isReady} />}
+          {currentApp === 'video' && <VideoAnalyzer isReady={isReady} />}
         </main>
       </div>
     </div>

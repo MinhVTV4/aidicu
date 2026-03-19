@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Loader2, Languages, Bot, User, Sparkles, SlidersHorizontal, Zap, Image as ImageIcon, X, Mic, Square, Volume2, StopCircle } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const QUICK_PHRASES = [
   { icon: '👋', text: 'Xin chào, bạn khỏe không?' },
@@ -335,7 +337,11 @@ Không giải thích gì thêm.`;
                 {msg.audioUrl && (
                   <audio src={msg.audioUrl} controls className="max-w-full mb-2 h-10" />
                 )}
-                <p className="whitespace-pre-wrap leading-relaxed">{msg.text}</p>
+                <div className="markdown-body">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {msg.text}
+                  </ReactMarkdown>
+                </div>
                 
                 {msg.role === 'ai' && (
                   <div className="mt-3 flex justify-start">
