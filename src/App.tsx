@@ -5,6 +5,7 @@ import Translator from './pages/Translator';
 import ImageAnalyzer from './pages/ImageAnalyzer';
 import ImageDescriber from './pages/ImageDescriber';
 import VideoAnalyzer from './pages/VideoAnalyzer';
+import AIBoardroom from './pages/AIBoardroom';
 
 export default function App() {
   const [currentApp, setCurrentApp] = useState('translator');
@@ -95,6 +96,7 @@ export default function App() {
           {currentApp === 'analyzer' && <ImageAnalyzer isReady={isReady} />}
           {currentApp === 'describer' && <ImageDescriber isReady={isReady} />}
           {currentApp === 'video' && <VideoAnalyzer isReady={isReady} />}
+          {currentApp === 'boardroom' && <AIBoardroom isReady={isReady} />}
         </main>
       </div>
     </div>
