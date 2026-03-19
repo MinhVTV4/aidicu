@@ -44,7 +44,7 @@ export default function AIBoardroom({ isReady, agents, setAgents }: AIBoardroomP
   }, [messages, typingAgent]);
 
   const runAgent = async (agent: Agent | { name: string; role: string; useSearch: boolean; avatar: string }, currentMessages: Message[], isSummarizer = false) => {
-    const model = (window as any).geminiModel;
+    const model = agent.useSearch ? (window as any).geminiSearchModel : (window as any).geminiModel;
     if (!model) throw new Error("AI Model not ready");
 
     const formattedHistory = currentMessages.map(msg => `[${msg.name}]: ${msg.content}`).join('\n\n');
@@ -175,7 +175,7 @@ export default function AIBoardroom({ isReady, agents, setAgents }: AIBoardroomP
             id: crypto.randomUUID(),
             role: 'system',
             name: 'Hệ thống',
-            content: `⚠️ ${agent.name} gặp sự cố và bị bỏ qua lượt.`
+            content: `⚠️ ${agent.name} gặp sự cố và bị bỏ qua lượt. Lỗi: ${err.message}`
           };
           currentMessages = [...currentMessages, errorMsg];
           setMessages(currentMessages);
