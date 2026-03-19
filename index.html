@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Translator</title>
+</head>
+<body>
+    <div id="root"></div>
+    <!-- Firebase AI Logic -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+      import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-ai.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyDYLYuXkEl2mYZEGeKa73O43RLPy8pgz0M",
+        authDomain: "chandoan-7216d.firebaseapp.com",
+        projectId: "chandoan-7216d",
+        storageBucket: "chandoan-7216d.firebasestorage.app",
+        messagingSenderId: "609312923908",
+        appId: "1:609312923908:web:d456190e872dba66a23051"
+      };
+
+      try {
+        const app = initializeApp(firebaseConfig);
+        const ai = getAI(app, { backend: new GoogleAIBackend() });
+        const model = getGenerativeModel(ai, { model: "gemini-3.1-flash-lite-preview" });
+        
+        // Gán vào biến window để React App có thể sử dụng
+        window.geminiModel = model;
+        
+        // Phát sự kiện để báo cho React App biết AI đã sẵn sàng
+        window.dispatchEvent(new Event('gemini-ready'));
+        console.log("Firebase AI Model initialized successfully!");
+      } catch (error) {
+        console.error("Lỗi khi khởi tạo AI Model:", error);
+        window.geminiInitError = error;
+        window.dispatchEvent(new Event('gemini-error'));
+      }
+    </script>
+    <!-- Load React App -->
+    <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
+
